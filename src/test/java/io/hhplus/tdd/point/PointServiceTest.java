@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,7 +50,7 @@ public class PointServiceTest {
 
     /* 작성이유
     포인트가 존재하지 않는 유저를 조회할 경우 기본값을 반환하는 것을 테스트 하기 위함.
- */
+    */
     @Test
     @DisplayName("존재하지 않는 유저 ID로 포인트를 조회할 경우 기본값(0)을 반환한다,")
     void selectNonExistentUserIdReturnPoint() {
@@ -68,5 +69,49 @@ public class PointServiceTest {
         assertThat(result.updateMillis()).isEqualTo(expected.updateMillis());
     }
 
+
+    /* 작성이유
+       유저id를 통해 이용내역을 조회했을때 내림차순(최신순)으로 반환 되는지 확인 하기 위함
+     */
+    @Test
+    @DisplayName("유저 ID로 포인트 충전,사용과 같은 이용내역을 조회한다.")
+    void selectUserIdReturnPointHistorySortedDesc() {
+        long userId = 1L;
+        List<PointHistory> expected = List.of(
+                new PointHistory(2L,userId, -500L, TransactionType.USE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli()),
+                new PointHistory(1L,userId, 1000L, TransactionType.CHARGE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli())
+
+        );
+        given(pointHistoryRepository.selectAllByUserIdSortedDesc(userId)).willReturn(expected);
+
+        // when
+        List<PointHistory> result = pointService.getUserPointHistory(userId);
+
+        // then
+        assertEquals(expected, result);
+        assertThat(result.isEmpty()).isFalse();
+        assertThat(result.get(0).id()).isEqualTo(2L);
+        assertThat(result.get(1).id()).isEqualTo(1L);
+        assertThat(result).extracting("type").containsExactly(TransactionType.USE, TransactionType.CHARGE);
+        assertThat(result).extracting("userId").containsOnly(1L);
+    }
+
+    /* 작성이유
+   유저id를 통해 조회 했으나 이용내역이 없을 경우 빈리스트 반환 하는지 확인.
+   */
+    @Test
+    @DisplayName("유저 ID로 포인트 충전,사용과 같은 이용내역을 조회한다.")
+    void selectUserIdNonExistentHistoryReturnEmptyHistory() {
+        long userId = 99L;
+        List<PointHistory> expected = List.of();
+        given(pointHistoryRepository.selectAllByUserIdSortedDesc(userId)).willReturn(expected);
+
+        // when
+        List<PointHistory> result = pointService.getUserPointHistory(userId);
+
+        // then
+        assertEquals(expected, result);
+        assertThat(result.isEmpty()).isTrue();
+    }
 
 }

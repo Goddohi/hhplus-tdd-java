@@ -30,12 +30,14 @@ public class PointController {
 
     /**
      * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
+     * 1. 유저의 사용내역을 최근순으로 리스트 반환
+     * 2. 사용내역이 없을 경우 빈리스트 반환
      */
     @GetMapping("{id}/histories")
     public List<PointHistory> history(
             @PathVariable long id
     ) {
-        return List.of();
+        return pointService.getUserPointHistory(id);
     }
 
     /**
