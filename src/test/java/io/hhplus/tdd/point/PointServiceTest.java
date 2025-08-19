@@ -13,7 +13,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -84,8 +83,8 @@ public class PointServiceTest {
     void selectUserIdReturnPointHistorySortedDesc() {
         long userId = 1L;
         List<PointHistory> expected = List.of(
-                new PointHistory(2L,userId, -500L, TransactionType.USE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli()),
-                new PointHistory(1L,userId, 1000L, TransactionType.CHARGE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli())
+                new PointHistory(2L, userId, -500L, TransactionType.USE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli()),
+                new PointHistory(1L, userId, 1000L, TransactionType.CHARGE, Instant.parse("2025-08-15T00:00:00Z").toEpochMilli())
 
         );
         given(pointHistoryRepository.selectAllByUserIdSortedDesc(userId)).willReturn(expected);
@@ -125,27 +124,22 @@ public class PointServiceTest {
        포인트 이용내역이 충전으로 기록이 되는지 확인한다
      */
     @Test
-    @DisplayName("포인트 이용내역이 충전으로 insert가 되는지 확인한다.")
+    @DisplayName("포인트 이용내역이 충전으로 insert메서드를 호출하는지 확인한다.")
     void insert_delegates_and_returns_value_charge() {
         // Given
         long userId = 1L;
         long amount = 1000L;
         TransactionType type = TransactionType.CHARGE;
-        long now = Instant.parse("2025-08-15T00:00:00Z").toEpochMilli();
-
-        PointHistory saved = new PointHistory(10L, userId, amount, type, now);
-        given(pointHistoryRepository.insert(userId, amount, type, now)).willReturn(saved);
+        long now = System.currentTimeMillis();
 
         // When
-        PointHistory result = pointHistoryRepository.insert(userId, amount, type, now);
+        pointService.insertUserPointHistory(userId, amount, type, now);
 
         // Then
-        // 1) 정확히 한 번, 같은 인자들로 호출되었는지
+        // 정확히 한 번, 같은 인자들로 호출되었는지
         then(pointHistoryRepository).should(times(1)).insert(userId, amount, type, now);
         then(pointHistoryRepository).shouldHaveNoMoreInteractions();
 
-        // 2) 반환값이 그대로 전달되는지
-        assertThat(result).isEqualTo(saved);
     }
 
     /* 작성이유
@@ -168,11 +162,11 @@ public class PointServiceTest {
         UserPoint maxUpdate = new UserPoint(maxUserId, 100000L, System.currentTimeMillis());
 
         given(userPointRepository.selectById(minUserId)).willReturn(minCurrent);
-        given(userPointRepository.insertOrUpdate(minUserId, minAmount+minCurrent.point())).willReturn(minUpdate);
+        given(userPointRepository.insertOrUpdate(minUserId, minAmount + minCurrent.point())).willReturn(minUpdate);
 
 
         given(userPointRepository.selectById(maxUserId)).willReturn(maxCurrent);
-        given(userPointRepository.insertOrUpdate(maxUserId, maxAmount+maxCurrent.point())).willReturn(maxUpdate);
+        given(userPointRepository.insertOrUpdate(maxUserId, maxAmount + maxCurrent.point())).willReturn(maxUpdate);
 
         // When
         UserPoint minResult = pointService.chargeUserPoint(minUserId, minAmount);
@@ -199,7 +193,7 @@ public class PointServiceTest {
     void 최소금액_미만시_충전_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MIN_CHARGE-1L;
+        long amount = UserPoint.MIN_CHARGE - 1L;
 
         UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
@@ -211,7 +205,7 @@ public class PointServiceTest {
             pointService.chargeUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage(String.format("%,d", UserPoint.MIN_CHARGE)+"원 이상의 포인트부터 충전이 가능합니다.");
+                .hasMessage(String.format("%,d", UserPoint.MIN_CHARGE) + "원 이상의 포인트부터 충전이 가능합니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
@@ -226,7 +220,7 @@ public class PointServiceTest {
     void 금액_초과충전시_충전_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MAX_CHARGE+1L;
+        long amount = UserPoint.MAX_CHARGE + 1L;
 
         UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
@@ -265,13 +259,147 @@ public class PointServiceTest {
             pointService.chargeUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage("최대 가질 수 있는 포인트("+String.format("%,d", UserPoint.MAX_BALANCE)+")를 초과했습니다.");
+                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", UserPoint.MAX_BALANCE) + ")를 초과했습니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
         then(userPointRepository).shouldHaveNoMoreInteractions();
     }
 
+    /*-------사용--------*/
+    /*  작성이유
+       포인트 이용내역이 사용으로 기록이 되는지 확인
+     */
+    @Test
+    @DisplayName("포인트 이용내역이 사용으로 insert메서드를 호출하는지 확인한다.")
+    void insert_delegates_and_returns_value_use() {
+        // Given
+        long userId = 1L;
+        long amount = 1000L;
+        TransactionType type = TransactionType.USE;
+        long now = System.currentTimeMillis();
 
+        // When
+        pointService.insertUserPointHistory(userId, amount, type, now);
+
+        // Then
+        // 정확히 한 번, 같은 인자들로 호출되었는지
+        then(pointHistoryRepository).should(times(1)).insert(userId, amount, type, now);
+        then(pointHistoryRepository).shouldHaveNoMoreInteractions();
+    }
+
+
+    /* 작성이유
+     사용자의 포인트 잔액을 사용하는지 확인하기 위함
+    */
+    @Test
+    @DisplayName("사용 성공: 사용자의 포인트 잔액을 사용한다.")
+    void use_success_records_history_and_updates_point() {
+        // Given
+        long userId = 1L;
+        long amount = 1000L;
+
+
+        UserPoint current = new UserPoint(userId, 1000L, System.currentTimeMillis());
+        UserPoint update = new UserPoint(userId, 0L, System.currentTimeMillis());
+
+
+        given(userPointRepository.selectById(userId)).willReturn(current);
+        given(userPointRepository.insertOrUpdate(userId, current.point() - amount)).willReturn(update);
+
+
+        // When
+        UserPoint minResult = pointService.useUserPoint(userId, amount);
+
+        // Then
+        // 이력 insert가 use타입으로 호출되었는지
+        then(pointHistoryRepository).should(times(1))
+                .insert(eq(userId), eq(amount), eq(TransactionType.USE), anyLong());
+
+
+        // 서비스 반환값 검증
+        assertThat(minResult).isEqualTo(update);
+    }
+
+    /* 작성이유
+        최소사용금액 미만의 금액 충전 시도시 예외발생 확인 (0미만)
+     */
+    @Test
+    @DisplayName("사용 실패: 최소사용금액미만 충전시 예외발생")
+    void 최소금액_미만시_사용_실패() {
+        // Given
+        long userId = 2L;
+        long amount = UserPoint.MIN_USE - 1L;
+
+        UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+
+        // When
+
+        // Then
+        assertThatThrownBy(() -> {
+            pointService.useUserPoint(userId, amount);
+        })
+                .isInstanceOf(PointServiceException.class)
+                .hasMessage(String.format(String.format("%,d", UserPoint.MIN_CHARGE) + "원 미만의 포인트은 사용이 불가능합니다."));
+
+        // 이력/업데이트는 호출되지 않아야 함
+        then(pointHistoryRepository).shouldHaveNoInteractions();
+        then(userPointRepository).shouldHaveNoMoreInteractions();
+    }
+
+    /* 작성이유
+        최대보유잔액한도초과 사용시도시 예외가 일어나는지 확인하고자 함
+     */
+    @Test
+    @DisplayName("사용 실패: 최대보유잔액한도초과 사용시도시 예외")
+    void 최대보유잔액한도초과_사용시_실패() {
+        // Given
+        long userId = 2L;
+        long amount = UserPoint.MAX_BALANCE + 1L;
+
+        UserPoint current = new UserPoint(userId, UserPoint.MAX_BALANCE, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+
+        // When
+
+        // Then
+        assertThatThrownBy(() -> {
+            pointService.useUserPoint(userId, amount);
+        })
+                .isInstanceOf(PointServiceException.class)
+                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", UserPoint.MAX_BALANCE) + ")를 초과하여 사용할 수 없습니다.");
+
+        // 이력/업데이트는 호출되지 않아야 함
+        then(pointHistoryRepository).shouldHaveNoInteractions();
+        then(userPointRepository).shouldHaveNoMoreInteractions();
+    }
+
+    /* 작성이유
+        사용자의 잔액 초과하여 사용시 예외발생을 확인하고자 함
+     */
+    @Test
+    @DisplayName("사용 실패: 사용자의 잔액 초과하여 사용시 예외발생")
+    void 사용자잔액_초과사용시_실패() {
+        // Given
+        long userId = 2L;
+        long amount = 2L;
+
+        UserPoint current = new UserPoint(userId, 1L, System.currentTimeMillis());
+        given(userPointRepository.selectById(userId)).willReturn(current);
+
+        // When
+
+        // Then
+        assertThatThrownBy(() -> {
+            pointService.useUserPoint(userId, amount);
+        })
+                .isInstanceOf(PointServiceException.class)
+                .hasMessage("잔액이 부족합니다.");
+
+        // 이력/업데이트는 호출되지 않아야 함
+        then(pointHistoryRepository).shouldHaveNoInteractions();
+        then(userPointRepository).shouldHaveNoMoreInteractions();
+    }
 
 }

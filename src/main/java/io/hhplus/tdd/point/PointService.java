@@ -37,7 +37,21 @@ public class PointService {
         return userPointRepository.insertOrUpdate(userId,currentUserPoint.point() + amount);
     }
 
-    public PointHistory insertUserPointHistory(long userId, long amount,TransactionType transactionType, long updateMillis){
-        return pointHistoryRepository.insert(userId,amount,transactionType,updateMillis);
+    public UserPoint useUserPoint(long userId, long amount){
+        UserPoint currentUserPoint = getUserPoint(userId);
+        currentUserPoint.validateUse(amount);
+
+        //사용 이력
+        insertUserPointHistory( userId,
+                                amount,
+                                TransactionType.USE,
+                                System.currentTimeMillis());
+
+        return userPointRepository.insertOrUpdate(userId,currentUserPoint.point() - amount);
+
+    }
+
+    public void insertUserPointHistory(long userId, long amount, TransactionType transactionType, long updateMillis){
+        pointHistoryRepository.insert(userId, amount, transactionType, updateMillis);
     }
 }
