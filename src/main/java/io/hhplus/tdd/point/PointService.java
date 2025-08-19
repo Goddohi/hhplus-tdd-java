@@ -20,4 +20,24 @@ public class PointService {
     public List<PointHistory> getUserPointHistory(long userId) {
         return pointHistoryRepository.selectAllByUserIdSortedDesc(userId);
     }
+
+
+
+    public UserPoint chargeUserPoint(long userId, long amount){
+        UserPoint currentUserPoint = getUserPoint(userId);
+
+        currentUserPoint.validateCharge(amount);
+
+        //충전 이력
+        insertUserPointHistory(userId,
+                               amount,
+                               TransactionType.CHARGE,
+                               System.currentTimeMillis());
+
+        return userPointRepository.insertOrUpdate(userId,currentUserPoint.point() + amount);
+    }
+
+    public PointHistory insertUserPointHistory(long userId, long amount,TransactionType transactionType, long updateMillis){
+        return pointHistoryRepository.insert(userId,amount,transactionType,updateMillis);
+    }
 }

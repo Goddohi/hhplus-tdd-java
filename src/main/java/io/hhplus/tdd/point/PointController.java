@@ -42,13 +42,18 @@ public class PointController {
 
     /**
      * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
+     * 1. 충전을 하고 나서 잔액 반환
+     * 2. 충전을 한 이용내역 기록
+     * 조건 - 1원이상인경우에만 충전할것
+     *     - 최대1회충전금액을 설정하여 충전제한을 걸것
+     *     - 최대포인트잔액을 설정하여 충전제한을 걸것
      */
     @PatchMapping("{id}/charge")
     public UserPoint charge(
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        return pointService.chargeUserPoint(id,amount);
     }
 
     /**

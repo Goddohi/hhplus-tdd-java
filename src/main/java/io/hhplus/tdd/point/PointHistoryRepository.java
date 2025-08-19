@@ -24,4 +24,8 @@ public class PointHistoryRepository {
                                 .toList();
     }
 
+    public PointHistory insert(long userId, long amount, TransactionType type, long updateMillis){
+        return pointHistoryTable.insert(userId, amount, type, updateMillis);
+    }
+
 }
