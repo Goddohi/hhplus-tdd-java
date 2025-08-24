@@ -106,4 +106,23 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.message").value(containsString(String.format("%,d", PointPolicy.MIN_CHARGE)+"원 이상의 포인트부터 충전이 가능합니다.")));
     }
 
+
+    // ===== 포인트 사용 =====
+    @Test
+    @DisplayName("[PATCH] /point/{id}/use → 사용 성공")
+    void use_success() throws Exception {
+        long userId = 7L;
+        long amount = 500L;
+        var after = new UserPoint(userId, 1500L, System.currentTimeMillis());
+
+        Mockito.when(pointService.useUserPoint(eq(userId), eq(amount))).thenReturn(after);
+
+        mvc.perform(patch("/point/{id}/use", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.valueOf(amount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId))
+                .andExpect(jsonPath("$.point").value(1500));
+    }
+
 }
