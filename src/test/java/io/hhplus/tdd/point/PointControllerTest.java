@@ -32,6 +32,8 @@ public class PointControllerTest {
     @MockBean
     PointService pointService;
 
+
+    // ===== 포인트 조회 =====
     @Test
     @DisplayName("[GET] /point/{id} → 현재 포인트 조회")
     void getPoint_success() throws Exception {
@@ -45,5 +47,26 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.point").value(1234))
                 .andExpect(jsonPath("$.updateMillis").value(1_726_000_000_000L));
     }
+
+
+    // ===== 포인트 사용이력 리스트 조회 =====
+    @Test
+    @DisplayName("[GET] /point/{id}/histories → 최근순 이력 리스트")
+    void getHistories_success() throws Exception {
+        var h1 = new PointHistory(1L, 7L, 500L, TransactionType.CHARGE, 1_726_000_000_000L);
+        var h2 = new PointHistory(2L, 7L, 200L, TransactionType.USE,    1_726_000_100_000L);
+        Mockito.when(pointService.getUserPointHistory(7L)).thenReturn(List.of(h1, h2));
+
+        mvc.perform(get("/point/{id}/histories", 7L))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].userId").value(7))
+                .andExpect(jsonPath("$[0].amount").value(500))
+                .andExpect(jsonPath("$[0].type").value("CHARGE"))
+                .andExpect(jsonPath("$[1].type").value("USE"));
+    }
+
 
 }
