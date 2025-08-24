@@ -30,7 +30,7 @@ public record UserPoint(
 
     public void validateUse(long amount) {
         if(amount < MIN_USE)
-            throw new PointServiceException(String.format("%,d", MIN_CHARGE)+"원 미만의 포인트은 사용이 불가능합니다.");
+            throw new PointServiceException(String.format("%,d", MIN_USE)+"원 미만의 포인트은 사용이 불가능합니다.");
 
         if(amount > MAX_BALANCE)
             throw new PointServiceException("최대 가질 수 있는 포인트("+String.format("%,d", MAX_BALANCE)+")를 초과하여 사용할 수 없습니다.");

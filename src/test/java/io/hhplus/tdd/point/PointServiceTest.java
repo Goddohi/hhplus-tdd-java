@@ -341,7 +341,7 @@ public class PointServiceTest {
             pointService.useUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage(String.format(String.format("%,d", UserPoint.MIN_CHARGE) + "원 미만의 포인트은 사용이 불가능합니다."));
+                .hasMessage(String.format("%,d", UserPoint.MIN_USE) + "원 미만의 포인트은 사용이 불가능합니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
