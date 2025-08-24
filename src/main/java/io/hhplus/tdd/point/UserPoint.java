@@ -28,9 +28,6 @@ public record UserPoint(
         if(amount < PointPolicy.MIN_USE)
             throw new PointServiceException(String.format("%,d", PointPolicy.MIN_USE)+"원 미만의 포인트은 사용이 불가능합니다.");
 
-        if(amount > PointPolicy.MAX_BALANCE)
-            throw new PointServiceException("최대 가질 수 있는 포인트("+String.format("%,d", PointPolicy.MAX_BALANCE)+")를 초과하여 사용할 수 없습니다.");
-
         if(amount > this.point )
             throw new PointServiceException("잔액이 부족합니다.");
 

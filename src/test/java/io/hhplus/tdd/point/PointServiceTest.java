@@ -349,33 +349,6 @@ public class PointServiceTest {
     }
 
     /* 작성이유
-        최대보유잔액한도초과 사용시도시 예외가 일어나는지 확인하고자 함
-     */
-    @Test
-    @DisplayName("사용 실패: 최대보유잔액한도초과 사용시도시 예외")
-    void 최대보유잔액한도초과_사용시_실패() {
-        // Given
-        long userId = 2L;
-        long amount = PointPolicy.MAX_BALANCE + 1L;
-
-        UserPoint current = new UserPoint(userId, PointPolicy.MAX_BALANCE, System.currentTimeMillis());
-        given(userPointRepository.selectById(userId)).willReturn(current);
-
-        // When
-
-        // Then
-        assertThatThrownBy(() -> {
-            pointService.useUserPoint(userId, amount);
-        })
-                .isInstanceOf(PointServiceException.class)
-                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", PointPolicy.MAX_BALANCE) + ")를 초과하여 사용할 수 없습니다.");
-
-        // 이력/업데이트는 호출되지 않아야 함
-        then(pointHistoryRepository).shouldHaveNoInteractions();
-        then(userPointRepository).shouldHaveNoMoreInteractions();
-    }
-
-    /* 작성이유
         사용자의 잔액 초과하여 사용시 예외발생을 확인하고자 함
      */
     @Test
