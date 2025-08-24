@@ -5,7 +5,7 @@ package io.hhplus.tdd.point;
 public final class PointPolicy {
     private PointPolicy() {}
     /** 1회 최소 충전포인트 */
-    public static final long MIN_CHARGE = -1L;
+    public static final long MIN_CHARGE = 1L;
 
     /** 1회 최대 충전포인트 */
     public static final long MAX_CHARGE = 100_000L;
