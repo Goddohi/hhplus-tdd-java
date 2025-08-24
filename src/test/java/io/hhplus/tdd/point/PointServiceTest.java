@@ -150,9 +150,9 @@ public class PointServiceTest {
     void charge_success_records_history_and_updates_point() {
         // Given
         long minUserId = 1L;
-        long minAmount = UserPoint.MIN_CHARGE; //1
+        long minAmount = PointPolicy.MIN_CHARGE; //1
         long maxUserId = 2L;
-        long maxAmount = UserPoint.MAX_CHARGE; //100,000
+        long maxAmount = PointPolicy.MAX_CHARGE; //100,000
 
 
         UserPoint minCurrent = new UserPoint(minUserId, 9000L, System.currentTimeMillis());
@@ -193,7 +193,7 @@ public class PointServiceTest {
     void 최소금액_미만시_충전_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MIN_CHARGE - 1L;
+        long amount = PointPolicy.MIN_CHARGE - 1L;
 
         UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
@@ -205,7 +205,7 @@ public class PointServiceTest {
             pointService.chargeUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage(String.format("%,d", UserPoint.MIN_CHARGE) + "원 이상의 포인트부터 충전이 가능합니다.");
+                .hasMessage(String.format("%,d", PointPolicy.MIN_CHARGE) + "원 이상의 포인트부터 충전이 가능합니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
@@ -220,7 +220,7 @@ public class PointServiceTest {
     void 금액_초과충전시_충전_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MAX_CHARGE + 1L;
+        long amount = PointPolicy.MAX_CHARGE + 1L;
 
         UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
@@ -232,7 +232,7 @@ public class PointServiceTest {
             pointService.chargeUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage("한 번에 충전할 수 있는 포인트(" + String.format("%,d", UserPoint.MAX_CHARGE) + ")를 초과했습니다.");
+                .hasMessage("한 번에 충전할 수 있는 포인트(" + String.format("%,d", PointPolicy.MAX_CHARGE) + ")를 초과했습니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
@@ -249,7 +249,7 @@ public class PointServiceTest {
         long userId = 2L;
         long amount = 1L;
 
-        UserPoint current = new UserPoint(userId, UserPoint.MAX_BALANCE, System.currentTimeMillis());
+        UserPoint current = new UserPoint(userId, PointPolicy.MAX_BALANCE, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
 
         // When
@@ -259,7 +259,7 @@ public class PointServiceTest {
             pointService.chargeUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", UserPoint.MAX_BALANCE) + ")를 초과했습니다.");
+                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", PointPolicy.MAX_BALANCE) + ")를 초과했습니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
@@ -329,7 +329,7 @@ public class PointServiceTest {
     void 최소금액_미만시_사용_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MIN_USE - 1L;
+        long amount = PointPolicy.MIN_USE - 1L;
 
         UserPoint current = new UserPoint(userId, 5000L, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
@@ -341,7 +341,7 @@ public class PointServiceTest {
             pointService.useUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage(String.format("%,d", UserPoint.MIN_USE) + "원 미만의 포인트은 사용이 불가능합니다.");
+                .hasMessage(String.format("%,d", PointPolicy.MIN_USE) + "원 미만의 포인트은 사용이 불가능합니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
@@ -356,9 +356,9 @@ public class PointServiceTest {
     void 최대보유잔액한도초과_사용시_실패() {
         // Given
         long userId = 2L;
-        long amount = UserPoint.MAX_BALANCE + 1L;
+        long amount = PointPolicy.MAX_BALANCE + 1L;
 
-        UserPoint current = new UserPoint(userId, UserPoint.MAX_BALANCE, System.currentTimeMillis());
+        UserPoint current = new UserPoint(userId, PointPolicy.MAX_BALANCE, System.currentTimeMillis());
         given(userPointRepository.selectById(userId)).willReturn(current);
 
         // When
@@ -368,7 +368,7 @@ public class PointServiceTest {
             pointService.useUserPoint(userId, amount);
         })
                 .isInstanceOf(PointServiceException.class)
-                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", UserPoint.MAX_BALANCE) + ")를 초과하여 사용할 수 없습니다.");
+                .hasMessage("최대 가질 수 있는 포인트(" + String.format("%,d", PointPolicy.MAX_BALANCE) + ")를 초과하여 사용할 수 없습니다.");
 
         // 이력/업데이트는 호출되지 않아야 함
         then(pointHistoryRepository).shouldHaveNoInteractions();
