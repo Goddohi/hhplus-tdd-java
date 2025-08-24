@@ -69,4 +69,41 @@ public class PointControllerTest {
     }
 
 
+
+    // ===== 포인트 충전  =====
+    @Test
+    @DisplayName("[PATCH] /point/{id}/charge → 충전 성공")
+    void charge_success() throws Exception {
+        long userId = 7L;
+        long amount = 1000L;
+        var after = new UserPoint(userId, 2000L, System.currentTimeMillis());
+
+        Mockito.when(pointService.chargeUserPoint(eq(userId), eq(amount))).thenReturn(after);
+
+        mvc.perform(patch("/point/{id}/charge", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.valueOf(amount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId))
+                .andExpect(jsonPath("$.point").value(2000));
+    }
+
+    @Test
+    @DisplayName("실패(예외테스트) [PATCH] /point/{id}/charge → 400 (최소충전금액 미만 실패)")
+    void charge_badRequest_whenNegative() throws Exception {
+        long userId = 7L;
+        long amount = -1L;
+
+        Mockito.when(pointService.chargeUserPoint(eq(userId), eq(amount)))
+                .thenThrow(new PointServiceException(String.format("%,d", PointPolicy.MIN_CHARGE)+"원 이상의 포인트부터 충전이 가능합니다."));
+
+        mvc.perform(patch("/point/{id}/charge", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.valueOf(amount)))
+                .andExpect(status().is(400))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").exists())
+                .andExpect(jsonPath("$.message").value(containsString(String.format("%,d", PointPolicy.MIN_CHARGE)+"원 이상의 포인트부터 충전이 가능합니다.")));
+    }
+
 }
